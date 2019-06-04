@@ -30,10 +30,11 @@ using namespace std;
 #include "jly_goicp.h"
 #include "ConfigMap.hpp"
 
-#define DEFAULT_OUTPUT_FNAME "output.txt"
-#define DEFAULT_CONFIG_FNAME "config.txt"
-#define DEFAULT_MODEL_FNAME "model.txt"
-#define DEFAULT_DATA_FNAME "data.txt"
+#define DEFAULT_OUTPUT_FNAME "../demo/output.txt"
+#define DEFAULT_CONFIG_FNAME "../demo/config.txt"
+#define DEFAULT_MODEL_FNAME "../demo/model_bunny.txt"
+#define DEFAULT_DATA_FNAME "../demo/data_bunny.txt"
+#define DEFAULT_DOWNSAMPLE (500)
 
 void parseInput(int argc, char **argv, string & modelFName, string & dataFName, int & NdDownsampled, string & configFName, string & outputFName);
 void readConfig(string FName, GoICP & goicp);
@@ -93,6 +94,8 @@ int main(int argc, char** argv)
 	delete(pModel);
 	delete(pData);
 
+	cout << "Press enter to continue... " << endl;
+	getchar();
 	return 0;
 }
 
@@ -103,7 +106,7 @@ void parseInput(int argc, char **argv, string & modelFName, string & dataFName, 
 	dataFName = DEFAULT_DATA_FNAME;
 	configFName = DEFAULT_CONFIG_FNAME;
 	outputFName = DEFAULT_OUTPUT_FNAME;
-	NdDownsampled = 0; // No downsampling
+	NdDownsampled = DEFAULT_DOWNSAMPLE; // No downsampling
 
 	//cout << endl;
 	//cout << "USAGE:" << "./GOICP <MODEL FILENAME> <DATA FILENAME> <NUM DOWNSAMPLED DATA POINTS> <CONFIG FILENAME> <OUTPUT FILENAME>" << endl;
