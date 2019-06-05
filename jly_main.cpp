@@ -29,6 +29,8 @@ using namespace std;
 
 #include "jly_goicp.h"
 #include "ConfigMap.hpp"
+#include "BasicVisualizer.h"
+#include "pointCloudProcessing.h"
 
 #define DEFAULT_OUTPUT_FNAME "../demo/output.txt"
 #define DEFAULT_CONFIG_FNAME "../demo/config.txt"
@@ -84,12 +86,69 @@ int main(int argc, char** argv)
 	cout << goicp.optT << endl;
 	cout << "Finished in " << time << endl;
 
+	
 	ofstream ofile;
 	ofile.open(outputFname.c_str(), ofstream::out);
 	ofile << time << endl;
 	ofile << goicp.optR << endl;
 	ofile << goicp.optT << endl;
 	ofile.close();
+	
+	cv::Mat transform4x4;
+	cv::Mat R = cv::Mat(cv::Size(3, 3), CV_32FC1);
+	cv::Mat T = cv::Mat(cv::Size(1, 3), CV_32FC1);
+	T.at<float>(0, 0) = goicp.optT.val[0][0];
+	T.at<float>(1, 0) = goicp.optT.val[1][0];
+	T.at<float>(2, 0) = goicp.optT.val[2][0];
+
+	R.at<float>(0, 0) = goicp.optR.val[0][0]; R.at<float>(0, 1) = goicp.optR.val[0][1]; R.at<float>(0, 2) = goicp.optR.val[0][2];
+	R.at<float>(1, 0) = goicp.optR.val[1][0]; R.at<float>(1, 1) = goicp.optR.val[1][1]; R.at<float>(1, 2) = goicp.optR.val[1][2];
+	R.at<float>(2, 0) = goicp.optR.val[2][0]; R.at<float>(2, 1) = goicp.optR.val[2][1]; R.at<float>(2, 2) = goicp.optR.val[2][2];
+
+	pointCloudProcessing::generate4X4MatrixFromRotationNTranslation(R, T, transform4x4);
+
+	cv::Mat inPointCloud = cv::Mat(cv::Size(3, Nm), CV_32FC1);
+	cv::Mat outPointCloud = cv::Mat(cv::Size(3, Nd), CV_32FC1);;
+
+	for (int i = 0; i < Nm; ++i)
+	{
+		inPointCloud.at<float>(i, 0) = pModel[i].x;
+		inPointCloud.at<float>(i, 1) = pModel[i].y;
+		inPointCloud.at<float>(i, 2) = pModel[i].z;
+	}
+	for (int i = 0; i < Nd; ++i)
+	{
+		outPointCloud.at<float>(i, 0) = pData[i].x;
+		outPointCloud.at<float>(i, 1) = pData[i].y;
+		outPointCloud.at<float>(i, 2) = pData[i].z;
+	}
+	cv::Mat outPointCloudTrans;
+	pointCloudProcessing::transformPointCloud(outPointCloud,transform4x4, outPointCloudTrans);
+	
+	/************ display ***************/
+	{
+		BasicVisualizer::BasicVisualizer vis;
+
+		cv::Mat PointCloud;
+		vis.addPointCloud(outPointCloudTrans, "pointcloudTarget");
+		vis.addText("pointcloudTarget", 0, 12, 12, 1, 1, 1, "pointcloudTarget_text");
+		vis.setPointCloudRenderingProperties(BasicVisualizer::COLOR,
+			1.0,
+			1.0,
+			1.0,
+			"pointcloudTarget");
+
+		vis.addPointCloud(inPointCloud, "pointcloudSrc");
+		vis.addText("pointcloudSrc", 0, 0, 12, 1, 1, 1, "pointcloudSrc_text");
+		vis.setPointCloudRenderingProperties(BasicVisualizer::COLOR,
+			0,
+			1.0,
+			0,
+			"pointcloudSrc");
+		vis.setBackgroundColor(0.0, 0.0, 0);
+		vis.Render();
+		vis.clearVisualizer();
+	}
 
 	delete(pModel);
 	delete(pData);
